@@ -1,0 +1,20 @@
+type: edu
+files:
+- name: src/Application.kt
+  visible: true
+- name: build.gradle
+  visible: true
+- name: src/resources/application.conf
+  visible: true
+- name: test/HotKitchenTest.kt
+  visible: true
+- name: test/testdata/Credentials.kt
+  visible: true
+- name: test/testdata/Meal.kt
+  visible: true
+- name: test/testdata/Order.kt
+  visible: true
+- name: test/testdata/Token.kt
+  visible: true
+- name: test/testdata/User.kt
+  visible: true

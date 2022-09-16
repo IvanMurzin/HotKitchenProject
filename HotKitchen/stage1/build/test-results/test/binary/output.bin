@@ -1,0 +1,4 @@
+[1;31m
+Start test 1[0m
+a18:49:49.536 [main] INFO ktor.test - Autoreload is disabled because the development mode is off.
+J18:49:49.731 [main] INFO ktor.test - Application started in 0.23 seconds.

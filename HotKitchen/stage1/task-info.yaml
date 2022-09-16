@@ -1,0 +1,10 @@
+type: edu
+files:
+- name: test/HotKitchenTest.kt
+  visible: false
+- name: src/Application.kt
+  visible: true
+- name: build.gradle
+  visible: true
+- name: src/resources/application.conf
+  visible: true
