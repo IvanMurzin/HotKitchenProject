@@ -1,19 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="HotKitchenTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2022-09-16T15:49:49" hostname="Alduin.local" time="0.418">
+<testsuite name="HotKitchenTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2022-10-24T20:04:53" hostname="Alduin.local" time="0.324">
   <properties/>
-  <testcase name="start" classname="HotKitchenTest" time="0.418">
-    <failure message="java.lang.AssertionError: Wrong answer in test #1&#10;&#10;Cannot register a new user. Wrong response message or status code.&#10;&#10;Please find below the output of your program during this failed test.&#10;&#10;---&#10;&#10;18:49:49.536 [main] INFO ktor.test - Autoreload is disabled because the development mode is off.&#10;18:49:49.731 [main] INFO ktor.test - Application started in 0.23 seconds." type="java.lang.AssertionError">java.lang.AssertionError: Wrong answer in test #1
+  <testcase name="start" classname="HotKitchenTest" time="0.324">
+    <failure message="java.lang.AssertionError: Wrong answer in test #1&#10;&#10;Cannot register a new user. Wrong response message or status code." type="java.lang.AssertionError">java.lang.AssertionError: Wrong answer in test #1
 
 Cannot register a new user. Wrong response message or status code.
-
-Please find below the output of your program during this failed test.
-
----
-
-18:49:49.536 [main] INFO ktor.test - Autoreload is disabled because the development mode is off.
-18:49:49.731 [main] INFO ktor.test - Application started in 0.23 seconds.
 	at org.junit.Assert.fail(Assert.java:89)
-	at org.hyperskill.hstest.stage.StageTest.start(StageTest.java:155)
+	at org.hyperskill.hstest.stage.StageTest.start(StageTest.java:203)
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
@@ -48,21 +41,28 @@ Please find below the output of your program during this failed test.
 	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)
 	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:94)
 	at jdk.proxy1/jdk.proxy1.$Proxy2.processTestClass(Unknown Source)
-	at org.gradle.api.internal.tasks.testing.worker.TestWorker$2.run(TestWorker.java:176)
-	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:129)
-	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:100)
-	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:60)
-	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56)
-	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:133)
-	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:71)
-	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
-	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.processTestClass(TestWorker.java:121)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)
+	at org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection$DispatchWrapper.dispatch(MessageHubBackedObjectConnection.java:182)
+	at org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection$DispatchWrapper.dispatch(MessageHubBackedObjectConnection.java:164)
+	at org.gradle.internal.remote.internal.hub.MessageHub$Handler.run(MessageHub.java:414)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.ManagedExecutorImpl$1.run(ManagedExecutorImpl.java:48)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at org.gradle.internal.concurrent.ThreadFactoryImpl$ManagedThreadRunnable.run(ThreadFactoryImpl.java:56)
+	at java.base/java.lang.Thread.run(Thread.java:833)
 </failure>
   </testcase>
   <system-out><![CDATA[?[1;31m
 Start test 1?[0m
-18:49:49.536 [main] INFO ktor.test - Autoreload is disabled because the development mode is off.
-18:49:49.731 [main] INFO ktor.test - Application started in 0.23 seconds.
+?[0;34m23:04:53.403 [main] INFO ktor.test - Autoreload is disabled because the development mode is off.
+?[0m?[0;34m23:04:53.530 [main] INFO ktor.test - Application started in 0.155 seconds.
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

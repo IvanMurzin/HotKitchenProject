@@ -66,12 +66,17 @@ class HotKitchenTest : StageTest<Any>() {
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
         for (email in wrongEmails) {
-            with(handleRequest(HttpMethod.Post, "/signup") {
-                setBody(Json.encodeToString(Credentials(email, "client", "password123")))
-                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            }) {
-                if (response.content != Messages.invalidEmail || response.status() != HttpStatusCode.Forbidden)
-                    return@withApplication CheckResult.wrong("Invalid email is not handled correctly.\nWrong response message or status code.\n$email is invalid email")
+            val body = Json.encodeToString(Credentials(email, "client", "password123"))
+            try {
+                with(handleRequest(HttpMethod.Post, "/signup") {
+                    setBody(body)
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                }) {
+                    if (response.content != Messages.invalidEmail || response.status() != HttpStatusCode.Forbidden)
+                        return@withApplication CheckResult.wrong("Invalid email is not handled correctly.\nWrong response message or status code.\n$email is invalid email")
+                }
+            } catch (e: Exception) {
+                return@withApplication CheckResult.wrong("Server cannot receive data: $body")
             }
         }
         return@withApplication CheckResult.correct()
@@ -82,12 +87,17 @@ class HotKitchenTest : StageTest<Any>() {
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
         for (password in wrongPasswords) {
-            with(handleRequest(HttpMethod.Post, "/signup") {
-                setBody(Json.encodeToString(Credentials(currentCredentials.email, "client", password)))
-                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            }) {
-                if (response.content != Messages.invalidPassword || response.status() != HttpStatusCode.Forbidden)
-                    return@withApplication CheckResult.wrong("Invalid password is not handled correctly.\nWrong response message or status code.\n$password is invalid password")
+            val body = Json.encodeToString(Credentials(currentCredentials.email, "client", password))
+            try {
+                with(handleRequest(HttpMethod.Post, "/signup") {
+                    setBody(body)
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                }) {
+                    if (response.content != Messages.invalidPassword || response.status() != HttpStatusCode.Forbidden)
+                        return@withApplication CheckResult.wrong("Invalid password is not handled correctly.\nWrong response message or status code.\n$password is invalid password")
+                }
+            } catch (e: Exception) {
+                return@withApplication CheckResult.wrong("Server cannot receive data: $body")
             }
         }
         return@withApplication CheckResult.correct()
@@ -97,18 +107,23 @@ class HotKitchenTest : StageTest<Any>() {
     fun getSignInJWTToken(): CheckResult = withApplication(
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
-        with(handleRequest(HttpMethod.Post, "/signup") {
-            setBody(Json.encodeToString(currentCredentials))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            try {
-                val principal = Json.decodeFromString<Token>(response.content ?: "")
-                signInToken = principal.token
-                if (!signInToken.matches(jwtRegex) || signInToken.contains(currentCredentials.email))
-                    return@withApplication CheckResult.wrong("Invalid JWT token")
-            } catch (e: Exception) {
-                return@withApplication CheckResult.wrong("Cannot get token form /signin request")
+        val body = Json.encodeToString(currentCredentials)
+        try {
+            with(handleRequest(HttpMethod.Post, "/signup") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                try {
+                    val principal = Json.decodeFromString<Token>(response.content ?: "")
+                    signInToken = principal.token
+                    if (!signInToken.matches(jwtRegex) || signInToken.contains(currentCredentials.email))
+                        return@withApplication CheckResult.wrong("Invalid JWT token")
+                } catch (e: Exception) {
+                    return@withApplication CheckResult.wrong("Cannot get token form /signin request")
+                }
             }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -117,12 +132,17 @@ class HotKitchenTest : StageTest<Any>() {
     fun registerExistingUser(): CheckResult = withApplication(
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
-        with(handleRequest(HttpMethod.Post, "/signup") {
-            setBody(Json.encodeToString(currentCredentials))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.content != Messages.userAlreadyExists || response.status() != HttpStatusCode.Forbidden)
-                return@withApplication CheckResult.wrong("An existing user is registered. Wrong response message or status code.")
+        val body = Json.encodeToString(currentCredentials)
+        try {
+            with(handleRequest(HttpMethod.Post, "/signup") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.content != Messages.userAlreadyExists || response.status() != HttpStatusCode.Forbidden)
+                    return@withApplication CheckResult.wrong("An existing user is registered. Wrong response message or status code.")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -131,19 +151,29 @@ class HotKitchenTest : StageTest<Any>() {
     fun wrongAuthorization(): CheckResult = withApplication(
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
-        with(handleRequest(HttpMethod.Post, "/signin") {
-            setBody(Json.encodeToString(SignUpCredentials("why?does?this?email?exists", currentCredentials.password)))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.content != Messages.invalidEmailPassword || response.status() != HttpStatusCode.Forbidden)
-                return@withApplication CheckResult.wrong("Error when authorizing a user using a wrong email. Wrong response message or status code.")
+        val body1 = Json.encodeToString(SignUpCredentials("why?does?this?email?exists", currentCredentials.password))
+        try {
+            with(handleRequest(HttpMethod.Post, "/signin") {
+                setBody(body1)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.content != Messages.invalidEmailPassword || response.status() != HttpStatusCode.Forbidden)
+                    return@withApplication CheckResult.wrong("Error when authorizing a user using a wrong email. Wrong response message or status code.")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body1")
         }
-        with(handleRequest(HttpMethod.Post, "/signin") {
-            setBody(Json.encodeToString(SignUpCredentials(currentCredentials.email, "completelyWrong123")))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.content != Messages.invalidEmailPassword || response.status() != HttpStatusCode.Forbidden)
-                return@withApplication CheckResult.wrong("Error when authorizing a user using a wrong password. Wrong response message or status code.")
+        val body2 = Json.encodeToString(SignUpCredentials(currentCredentials.email, "completelyWrong123"))
+        try {
+            with(handleRequest(HttpMethod.Post, "/signin") {
+                setBody(body2)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.content != Messages.invalidEmailPassword || response.status() != HttpStatusCode.Forbidden)
+                    return@withApplication CheckResult.wrong("Error when authorizing a user using a wrong password. Wrong response message or status code.")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body2")
         }
         return@withApplication CheckResult.correct()
     }
@@ -152,18 +182,23 @@ class HotKitchenTest : StageTest<Any>() {
     fun getSignUpJWTToken(): CheckResult = withApplication(
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
-        with(handleRequest(HttpMethod.Post, "/signin") {
-            setBody(Json.encodeToString(SignUpCredentials(currentCredentials.email, currentCredentials.password)))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            try {
-                val principal = Json.decodeFromString<Token>(response.content ?: "")
-                signUpToken = principal.token
-                if (!signUpToken.matches(jwtRegex) || signUpToken.contains(currentCredentials.email))
-                    return@withApplication CheckResult.wrong("Invalid JWT token")
-            } catch (e: Exception) {
-                return@withApplication CheckResult.wrong("Cannot get token form /signup request")
+        val body = Json.encodeToString(SignUpCredentials(currentCredentials.email, currentCredentials.password))
+        try {
+            with(handleRequest(HttpMethod.Post, "/signin") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                try {
+                    val principal = Json.decodeFromString<Token>(response.content ?: "")
+                    signUpToken = principal.token
+                    if (!signUpToken.matches(jwtRegex) || signUpToken.contains(currentCredentials.email))
+                        return@withApplication CheckResult.wrong("Invalid JWT token")
+                } catch (e: Exception) {
+                    return@withApplication CheckResult.wrong("Cannot get token form /signup request")
+                }
             }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }

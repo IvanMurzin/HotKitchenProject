@@ -38,19 +38,24 @@ class HotKitchenTest : StageTest<Any>() {
     fun getSignInJWTToken(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/signup") {
-            setBody(Json.encodeToString(currentCredentials))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            try {
-                val principal = Json.decodeFromString<Token>(response.content ?: "")
-                signInToken = principal.token
-                if (!signInToken.matches(jwtRegex) || signInToken.contains(currentCredentials.email)) return@withApplication CheckResult.wrong(
-                    "Invalid JWT token"
-                )
-            } catch (e: Exception) {
-                return@withApplication CheckResult.wrong("Cannot get token form /signin request")
+        val body = Json.encodeToString(currentCredentials)
+        try {
+            with(handleRequest(HttpMethod.Post, "/signup") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                try {
+                    val principal = Json.decodeFromString<Token>(response.content ?: "")
+                    signInToken = principal.token
+                    if (!signInToken.matches(jwtRegex) || signInToken.contains(currentCredentials.email)) return@withApplication CheckResult.wrong(
+                        "Invalid JWT token"
+                    )
+                } catch (e: Exception) {
+                    return@withApplication CheckResult.wrong("Cannot get token form /signin request")
+                }
             }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -85,13 +90,17 @@ class HotKitchenTest : StageTest<Any>() {
     fun createUser(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Put, "/me") {
-            setBody(Json.encodeToString(currentUser))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
-        }) {
-            if (response.status() != HttpStatusCode.OK)
-                return@withApplication CheckResult.wrong("Cannot add user by put method")
+        val body = Json.encodeToString(currentUser)
+        try {
+            with(handleRequest(HttpMethod.Put, "/me") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
+            }) {
+                if (response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong("Cannot add user by put method")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -114,14 +123,18 @@ class HotKitchenTest : StageTest<Any>() {
     fun putDifferentEmail(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Put, "/me") {
-            val newUser = currentUser.copy(email = "different@mail.com")
-            setBody(Json.encodeToString(newUser))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
-        }) {
-            if (response.status() != HttpStatusCode.BadRequest)
-                return@withApplication CheckResult.wrong("You can not change the user's email! Wrong status code.")
+        val newUser = currentUser.copy(email = "different@mail.com")
+        val body = Json.encodeToString(newUser)
+        try {
+            with(handleRequest(HttpMethod.Put, "/me") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
+            }) {
+                if (response.status() != HttpStatusCode.BadRequest) return@withApplication CheckResult.wrong("You can not change the user's email! Wrong status code.")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -130,14 +143,18 @@ class HotKitchenTest : StageTest<Any>() {
     fun updateCurrentUser(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Put, "/me") {
-            currentUser = currentUser.copy(name = "newName$time", userType = "newType", address = "newAddress$time")
-            setBody(Json.encodeToString(currentUser))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-            addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
-        }) {
-            if (response.status() != HttpStatusCode.OK)
-                return@withApplication CheckResult.wrong("Cannot update user information by put method")
+        val body = Json.encodeToString(currentUser)
+        try {
+            with(handleRequest(HttpMethod.Put, "/me") {
+                currentUser = currentUser.copy(name = "newName$time", userType = "newType", address = "newAddress$time")
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
+            }) {
+                if (response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong("Cannot update user information by put method")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -163,8 +180,7 @@ class HotKitchenTest : StageTest<Any>() {
         with(handleRequest(HttpMethod.Delete, "/me") {
             addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
         }) {
-            if (response.status() != HttpStatusCode.OK)
-                return@withApplication CheckResult.wrong("Status code for a deleting existent user should be \"200 OK\"")
+            if (response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong("Status code for a deleting existent user should be \"200 OK\"")
         }
         return@withApplication CheckResult.correct()
     }
@@ -176,8 +192,7 @@ class HotKitchenTest : StageTest<Any>() {
         with(handleRequest(HttpMethod.Delete, "/me") {
             addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
         }) {
-            if (response.status() != HttpStatusCode.BadRequest)
-                return@withApplication CheckResult.wrong("Status code for a deleting non-existent user should be \"400 Bad Request\"")
+            if (response.status() != HttpStatusCode.BadRequest) return@withApplication CheckResult.wrong("Status code for a deleting non-existent user should be \"400 Bad Request\"")
         }
         return@withApplication CheckResult.correct()
     }
@@ -189,8 +204,7 @@ class HotKitchenTest : StageTest<Any>() {
         with(handleRequest(HttpMethod.Get, "/me") {
             addHeader(HttpHeaders.Authorization, "Bearer $signInToken")
         }) {
-            if (response.status() != HttpStatusCode.BadRequest)
-                return@withApplication CheckResult.wrong("Status code for a getting deleted user should be \"400 Bad Request\"")
+            if (response.status() != HttpStatusCode.BadRequest) return@withApplication CheckResult.wrong("Status code for a getting deleted user should be \"400 Bad Request\"")
         }
         return@withApplication CheckResult.correct()
     }
@@ -199,12 +213,16 @@ class HotKitchenTest : StageTest<Any>() {
     fun checkDeletedCredentials(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/signup") {
-            setBody(Json.encodeToString(currentCredentials))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.status() != HttpStatusCode.OK)
-                return@withApplication CheckResult.wrong("Unable to signin after deleting user information. Did you forget to delete user credentials?")
+        val body = Json.encodeToString(currentCredentials)
+        try {
+            with(handleRequest(HttpMethod.Post, "/signup") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong("Unable to signin after deleting user information. Did you forget to delete user credentials?")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }

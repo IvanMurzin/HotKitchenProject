@@ -24,13 +24,18 @@ class HotKitchenTest : StageTest<Any>() {
     fun registerNewUser(): CheckResult = withApplication(
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
-        with(handleRequest(HttpMethod.Post, "/signup") {
-            setBody(currentCredentials)
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.content != signedIn || response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong(
-                "Cannot register a new user. Wrong response message or status code."
-            )
+        val body = currentCredentials
+        try {
+            with(handleRequest(HttpMethod.Post, "/signup") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.content != signedIn || response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong(
+                    "Cannot register a new user. Wrong response message or status code."
+                )
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -40,13 +45,18 @@ class HotKitchenTest : StageTest<Any>() {
     fun registerExistingUser(): CheckResult = withApplication(
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
-        with(handleRequest(HttpMethod.Post, "/signup") {
-            setBody(currentCredentials)
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.content != registrationFailed || response.status() != HttpStatusCode.Forbidden) return@withApplication CheckResult.wrong(
-                "An existing user is registered. Wrong response message or status code."
-            )
+        val body = currentCredentials
+        try {
+            with(handleRequest(HttpMethod.Post, "/signup") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.content != registrationFailed || response.status() != HttpStatusCode.Forbidden) return@withApplication CheckResult.wrong(
+                    "An existing user is registered. Wrong response message or status code."
+                )
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -55,13 +65,19 @@ class HotKitchenTest : StageTest<Any>() {
     fun wrongAuthorization(): CheckResult = withApplication(
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
-        with(handleRequest(HttpMethod.Post, "/signin") {
-            setBody(currentWrongSignIn)
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.content != authorizationFailed || response.status() != HttpStatusCode.Forbidden) return@withApplication CheckResult.wrong(
-                "Error when authorizing a user using a wrong password. Wrong response message or status code."
-            )
+        val body = currentWrongSignIn
+        try {
+
+            with(handleRequest(HttpMethod.Post, "/signin") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.content != authorizationFailed || response.status() != HttpStatusCode.Forbidden) return@withApplication CheckResult.wrong(
+                    "Error when authorizing a user using a wrong password. Wrong response message or status code."
+                )
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -70,15 +86,20 @@ class HotKitchenTest : StageTest<Any>() {
     fun correctAuthorization(): CheckResult = withApplication(
         createTestEnvironment { config = HoconApplicationConfig(ConfigFactory.load("application.conf")) })
     {
-        with(handleRequest(HttpMethod.Post, "/signin") {
-            setBody(currentCorrectSignIn)
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.content != signedUp || response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong(
-                "Error when authorizing a user using a correct password. Wrong response message or status code."
-            )
+        val body = currentCorrectSignIn
+        try {
+
+            with(handleRequest(HttpMethod.Post, "/signin") {
+                setBody(body)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.content != signedUp || response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong(
+                    "Error when authorizing a user using a correct password. Wrong response message or status code."
+                )
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
-
 }

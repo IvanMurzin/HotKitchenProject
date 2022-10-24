@@ -20,18 +20,12 @@ class HotKitchenTest : StageTest<Any>() {
 
     @Serializable
     data class Meal(
-        val mealId: Int,
-        val title: String,
-        val price: Float,
-        val imageUrl: String,
-        val categoryIds: List<Int>
+        val mealId: Int, val title: String, val price: Float, val imageUrl: String, val categoryIds: List<Int>
     )
 
     @Serializable
     data class Category(
-        val categoryId: Int,
-        val title: String,
-        val description: String
+        val categoryId: Int, val title: String, val description: String
     )
 
     private val time = System.currentTimeMillis()
@@ -47,9 +41,7 @@ class HotKitchenTest : StageTest<Any>() {
         listOf((0..10).random(), (0..10).random(), (0..10).random())
     )
     private val currentCategory = Category(
-        time.toInt(),
-        "$time TITLE",
-        "Awesome $time description"
+        time.toInt(), "$time TITLE", "Awesome $time description"
     )
     private lateinit var signInTokenClient: String
     private lateinit var signInTokenStaff: String
@@ -59,31 +51,43 @@ class HotKitchenTest : StageTest<Any>() {
     fun getSignInJWTToken(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/signup") {
-            setBody(Json.encodeToString(currentCredentialsClient))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            try {
-                val principal = Json.decodeFromString<Token>(response.content ?: "")
-                signInTokenClient = principal.token
-                if (!signInTokenClient.matches(jwtRegex) || signInTokenClient.contains(currentCredentialsClient.email))
-                    return@withApplication CheckResult.wrong("Invalid JWT token")
-            } catch (e: Exception) {
-                return@withApplication CheckResult.wrong("Cannot get token form /signin request")
+        val body1 = Json.encodeToString(currentCredentialsClient)
+        try {
+            with(handleRequest(HttpMethod.Post, "/signup") {
+                setBody(body1)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                try {
+                    val principal = Json.decodeFromString<Token>(response.content ?: "")
+                    signInTokenClient = principal.token
+                    if (!signInTokenClient.matches(jwtRegex) || signInTokenClient.contains(currentCredentialsClient.email)) return@withApplication CheckResult.wrong(
+                        "Invalid JWT token"
+                    )
+                } catch (e: Exception) {
+                    return@withApplication CheckResult.wrong("Cannot get token form /signin request")
+                }
             }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body1")
         }
-        with(handleRequest(HttpMethod.Post, "/signup") {
-            setBody(Json.encodeToString(currentCredentialsStaff))
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            try {
-                val principal = Json.decodeFromString<Token>(response.content ?: "")
-                signInTokenStaff = principal.token
-                if (!signInTokenStaff.matches(jwtRegex) || signInTokenStaff.contains(currentCredentialsStaff.email))
-                    return@withApplication CheckResult.wrong("Invalid JWT token")
-            } catch (e: Exception) {
-                return@withApplication CheckResult.wrong("Cannot get token form /signin request")
+        val body2 = Json.encodeToString(currentCredentialsStaff)
+        try {
+            with(handleRequest(HttpMethod.Post, "/signup") {
+                setBody(body2)
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                try {
+                    val principal = Json.decodeFromString<Token>(response.content ?: "")
+                    signInTokenStaff = principal.token
+                    if (!signInTokenStaff.matches(jwtRegex) || signInTokenStaff.contains(currentCredentialsStaff.email)) return@withApplication CheckResult.wrong(
+                        "Invalid JWT token"
+                    )
+                } catch (e: Exception) {
+                    return@withApplication CheckResult.wrong("Cannot get token form /signin request")
+                }
             }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body2")
         }
         return@withApplication CheckResult.correct()
     }
@@ -113,13 +117,19 @@ class HotKitchenTest : StageTest<Any>() {
     fun accessDeniedAdditionMeal(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/meals") {
-            setBody(Json.encodeToString(currentMeal))
-            addHeader(HttpHeaders.Authorization, "Bearer $signInTokenClient")
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.status() != HttpStatusCode.Forbidden || response.content != accessDenied)
-                return@withApplication CheckResult.wrong("Only staff can add meal. Wrong response or status code")
+        val body = Json.encodeToString(currentMeal)
+        try {
+            with(handleRequest(HttpMethod.Post, "/meals") {
+                setBody(body)
+                addHeader(HttpHeaders.Authorization, "Bearer $signInTokenClient")
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.status() != HttpStatusCode.Forbidden || response.content != accessDenied) return@withApplication CheckResult.wrong(
+                    "Only staff can add meal. Wrong response or status code"
+                )
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -128,13 +138,19 @@ class HotKitchenTest : StageTest<Any>() {
     fun accessDeniedAdditionCategory(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/categories") {
-            setBody(Json.encodeToString(currentCategory))
-            addHeader(HttpHeaders.Authorization, "Bearer $signInTokenClient")
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.status() != HttpStatusCode.Forbidden || response.content != accessDenied)
-                return@withApplication CheckResult.wrong("Only staff can add category. Wrong response or status code")
+        val body = Json.encodeToString(currentCategory)
+        try {
+            with(handleRequest(HttpMethod.Post, "/categories") {
+                setBody(body)
+                addHeader(HttpHeaders.Authorization, "Bearer $signInTokenClient")
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.status() != HttpStatusCode.Forbidden || response.content != accessDenied) return@withApplication CheckResult.wrong(
+                    "Only staff can add category. Wrong response or status code"
+                )
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -143,13 +159,17 @@ class HotKitchenTest : StageTest<Any>() {
     fun successAdditionMeal(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/meals") {
-            setBody(Json.encodeToString(currentMeal))
-            addHeader(HttpHeaders.Authorization, "Bearer $signInTokenStaff")
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.status() != HttpStatusCode.OK)
-                return@withApplication CheckResult.wrong("The meal was not added. Wrong status code.")
+        val body = Json.encodeToString(currentMeal)
+        try {
+            with(handleRequest(HttpMethod.Post, "/meals") {
+                setBody(body)
+                addHeader(HttpHeaders.Authorization, "Bearer $signInTokenStaff")
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong("The meal was not added. Wrong status code.")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -158,13 +178,17 @@ class HotKitchenTest : StageTest<Any>() {
     fun failedAdditionMeal(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/meals") {
-            setBody(Json.encodeToString(currentMeal))
-            addHeader(HttpHeaders.Authorization, "Bearer $signInTokenStaff")
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.status() != HttpStatusCode.BadRequest)
-                return@withApplication CheckResult.wrong("The meal was added twice. Wrong status code.")
+        val body = Json.encodeToString(currentMeal)
+        try {
+            with(handleRequest(HttpMethod.Post, "/meals") {
+                setBody(body)
+                addHeader(HttpHeaders.Authorization, "Bearer $signInTokenStaff")
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.status() != HttpStatusCode.BadRequest) return@withApplication CheckResult.wrong("The meal was added twice. Wrong status code.")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -173,13 +197,17 @@ class HotKitchenTest : StageTest<Any>() {
     fun successAdditionCategory(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/categories") {
-            setBody(Json.encodeToString(currentCategory))
-            addHeader(HttpHeaders.Authorization, "Bearer $signInTokenStaff")
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.status() != HttpStatusCode.OK)
-                return@withApplication CheckResult.wrong("The category was not added. Wrong status code.")
+        val body = Json.encodeToString(currentCategory)
+        try {
+            with(handleRequest(HttpMethod.Post, "/categories") {
+                setBody(body)
+                addHeader(HttpHeaders.Authorization, "Bearer $signInTokenStaff")
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong("The category was not added. Wrong status code.")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -188,13 +216,17 @@ class HotKitchenTest : StageTest<Any>() {
     fun failedAdditionCategory(): CheckResult = withApplication(createTestEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load("application.conf"))
     }) {
-        with(handleRequest(HttpMethod.Post, "/categories") {
-            setBody(Json.encodeToString(currentCategory))
-            addHeader(HttpHeaders.Authorization, "Bearer $signInTokenStaff")
-            addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-        }) {
-            if (response.status() != HttpStatusCode.BadRequest)
-                return@withApplication CheckResult.wrong("The category was added twice. Wrong status code.")
+        val body = Json.encodeToString(currentCategory)
+        try {
+            with(handleRequest(HttpMethod.Post, "/categories") {
+                setBody(body)
+                addHeader(HttpHeaders.Authorization, "Bearer $signInTokenStaff")
+                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            }) {
+                if (response.status() != HttpStatusCode.BadRequest) return@withApplication CheckResult.wrong("The category was added twice. Wrong status code.")
+            }
+        } catch (e: Exception) {
+            return@withApplication CheckResult.wrong("Server cannot receive data: $body")
         }
         return@withApplication CheckResult.correct()
     }
@@ -206,8 +238,7 @@ class HotKitchenTest : StageTest<Any>() {
         with(handleRequest(HttpMethod.Get, "/meals?id=${currentMeal.mealId}") {
             addHeader(HttpHeaders.Authorization, "Bearer $signInTokenClient")
         }) {
-            if (response.content != Json.encodeToString(currentMeal))
-                return@withApplication CheckResult.wrong("Wrong meal by id.")
+            if (response.content != Json.encodeToString(currentMeal)) return@withApplication CheckResult.wrong("Wrong meal by id.")
         }
         return@withApplication CheckResult.correct()
     }
@@ -219,8 +250,7 @@ class HotKitchenTest : StageTest<Any>() {
         with(handleRequest(HttpMethod.Get, "/categories?id=${currentCategory.categoryId}") {
             addHeader(HttpHeaders.Authorization, "Bearer $signInTokenClient")
         }) {
-            if (response.content != Json.encodeToString(currentCategory))
-                return@withApplication CheckResult.wrong("Wrong category by id.")
+            if (response.content != Json.encodeToString(currentCategory)) return@withApplication CheckResult.wrong("Wrong category by id.")
         }
         return@withApplication CheckResult.correct()
     }
@@ -242,8 +272,7 @@ class HotKitchenTest : StageTest<Any>() {
                 }
             }
             if (flag) return@withApplication CheckResult.wrong("Wrong meals list. The newly added meal is missing.")
-            if (response.status() != HttpStatusCode.OK)
-                return@withApplication CheckResult.wrong("Wrong status code in /meals")
+            if (response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong("Wrong status code in /meals")
         }
         return@withApplication CheckResult.correct()
     }
@@ -263,10 +292,8 @@ class HotKitchenTest : StageTest<Any>() {
                     break
                 }
             }
-            if (flag)
-                return@withApplication CheckResult.wrong("Wrong categories list. The newly added category is missing.")
-            if (response.status() != HttpStatusCode.OK)
-                return@withApplication CheckResult.wrong("Wrong status code in /categories")
+            if (flag) return@withApplication CheckResult.wrong("Wrong categories list. The newly added category is missing.")
+            if (response.status() != HttpStatusCode.OK) return@withApplication CheckResult.wrong("Wrong status code in /categories")
         }
         return@withApplication CheckResult.correct()
     }
